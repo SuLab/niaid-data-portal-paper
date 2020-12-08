@@ -9,14 +9,22 @@ niaid_accent_blue = "#83c5da"
 niaid_grey = "#D6D6D6"
 
 df = gs_read(gs)
-cts = df %>% group_by(generalPurpose) %>% count(schemaorgCompliant)
+
+counts = df %>% group_by(generalPurpose) %>% count(schemaorgCompliant)
 
 
-ggplot(cts, aes(x = generalPurpose, y = n, fill=schemaorgCompliant)) + 
+# by category -------------------------------------------------------------
+ggplot(counts, aes(x = generalPurpose, y = n, fill=schemaorgCompliant)) + 
   geom_bar(stat="identity") +
   coord_flip() +
   scale_x_discrete(labels = c("specialist", "general purpose")) +
-  scale_fill_manual(values = c("TRUE" = niaid_bright_blue, "FALSE" = niaid_grey, "TBD" = "green"), labels=c("no", "immport", "yes"), na.value="pink", name = "schema.org-compliant") +
+  scale_fill_manual(values = c("TRUE" = niaid_bright_blue, "FALSE" = niaid_grey, "TBD" = "green"), labels=c("no", "figshare/immport", "yes"), na.value="pink", name = "schema.org-compliant") +
   ggtitle("General purpose repositories adopt schema.org standards more than specialist ones", subtitle = "Number of repositories with schema.org-compliant datasets") + 
-  theme_light() +
+  theme_minimal() +
   theme(text = element_text(size = 16), title = element_text(size=10), axis.ticks.y = element_blank(), panel.grid.major.y = element_blank(), axis.title.y = element_blank(), axis.title.x = element_blank())
+
+cats = df %>% rowwise() %>% mutate(cats = str_split(category, ", ")) %>% 
+  select(schemaorgCompliant, cats) %>% 
+  unnest(cols = c(cats))
+
+cats %>% group_by(cats) %>% count(schemaorgCompliant) %>% mutate(pct = n/sum(n)) %>% filter(schemaorgCompliant == FALSE) %>% arrange(desc(pct)) %>% View()
